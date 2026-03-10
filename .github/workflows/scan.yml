@@ -2,27 +2,24 @@ name: Dependency Observatory
 
 on:
   workflow_dispatch:
-
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 * * * *"
 
 permissions:
   contents: write
 
 jobs:
   scan:
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: "3.11"
 
       - name: Install dependencies
         run: pip install requests
@@ -32,15 +29,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: python collector/collect_dependabot.py
 
-      - name: Generate dashboard
-        run: python dashboard/generate_dashboard.py
-
-      - name: Commit results
+      - name: Commit dashboard
         run: |
           git config --global user.name "dependency-bot"
           git config --global user.email "actions@github.com"
 
-          git add data/alerts.json dashboard.md
+          git add docs/
 
           git commit -m "Update dependency dashboard" || echo "No changes"
 
