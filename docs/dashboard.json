@@ -1,0 +1,13 @@
+{
+  "generated": "2026-03-10T12:40:00",
+  "repos": [
+    {
+      "repo": "rich-howell/med-manager",
+      "stack": "Flutter",
+      "dependencies": true,
+      "alert_count": 0,
+      "updates": 1,
+      "actions": 0
+    }
+  ]
+}
