@@ -1,10 +1,10 @@
 import requests
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
+GITHUB_TOKEN = os.getenv("PAT_TOKEN", "").strip()
 
 headers = {
     "Authorization": f"Bearer {GITHUB_TOKEN}",
@@ -104,7 +104,15 @@ def get_repos():
 
         r = requests.get(url, headers=headers)
 
+        if r.status_code != 200:
+            print(f"Failed to list repos (page {page}): {r.status_code} {r.text}")
+            break
+
         data = r.json()
+
+        if not isinstance(data, list):
+            print(f"Unexpected response while listing repos on page {page}: {type(data).__name__}")
+            break
 
         if not data:
             break
@@ -163,6 +171,20 @@ def detect_stack(files):
 
 def main():
 
+    # Always emit dashboard.json, even when auth is missing/invalid.
+    os.makedirs("docs", exist_ok=True)
+
+    if not GITHUB_TOKEN:
+        print("GITHUB_TOKEN is empty. Writing empty dashboard payload.")
+        output = {
+            "generated": datetime.now(timezone.utc).isoformat(),
+            "repos": [],
+            "error": "Missing GITHUB_TOKEN"
+        }
+        with open("docs/dashboard.json", "w") as f:
+            json.dump(output, f, indent=2)
+        return
+
     repos = get_repos()
 
     results = []
@@ -182,11 +204,8 @@ def main():
             except Exception as e:
                 print(f"Error scanning repo: {e}")
 
-    # Ensure docs directory exists
-    os.makedirs("docs", exist_ok=True)
-
     output = {
-        "generated": datetime.utcnow().isoformat(),
+        "generated": datetime.now(timezone.utc).isoformat(),
         "repos": results
     }
 

@@ -55,18 +55,24 @@
 
     <script>
       async function load() {
-        let data = await fetch("dashboard.json").then((r) => r.json());
+        const summary = document.getElementById("summary");
+        const tbody = document.querySelector("#repos tbody");
 
-        let repos = data.repos;
+        try {
+          const response = await fetch("./dashboard.json", { cache: "no-store" });
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
 
-        document.getElementById("summary").innerText = `Repos: ${repos.length}`;
+          const data = await response.json();
+          const repos = Array.isArray(data.repos) ? data.repos : [];
 
-        let tbody = document.querySelector("#repos tbody");
+          summary.innerText = `Repos: ${repos.length}`;
 
-        repos.forEach((repo) => {
-          let row = document.createElement("tr");
+          repos.forEach((repo) => {
+            let row = document.createElement("tr");
 
-          row.innerHTML = `
+            row.innerHTML = `
 <td>
 <a href="https://github.com/${repo.repo}" target="_blank">
 ${repo.repo}
@@ -77,21 +83,24 @@ ${repo.repo}
 
 <td>${repo.dependencies ? "📦" : "-"}</td>
 
-<td class="${repo.alerts > 0 ? "red" : "green"}">
-${repo.alerts}
+<td class="${repo.alert_count > 0 ? "red" : "green"}">
+${repo.alert_count ?? 0}
 </td>
 
 <td class="${repo.updates > 0 ? "yellow" : "green"}">
-${repo.updates}
+${repo.updates ?? 0}
 </td>
 
 <td class="${repo.actions > 0 ? "yellow" : "green"}">
-${repo.actions}
+${repo.actions ?? 0}
 </td>
 `;
 
-          tbody.appendChild(row);
-        });
+            tbody.appendChild(row);
+          });
+        } catch (error) {
+          summary.innerText = `Unable to load dashboard data: ${error.message}`;
+        }
       }
 
       load();
