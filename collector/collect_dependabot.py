@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-GITHUB_TOKEN = os.getenv("PAT_TOKEN", "").strip()
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "").strip()
 
 headers = {
     "Authorization": f"Bearer {GITHUB_TOKEN}",
