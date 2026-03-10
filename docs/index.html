@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Dependency Observatory</title>
+
+    <style>
+      body {
+        font-family: system-ui;
+        background: #0f172a;
+        color: white;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        border-bottom: 1px solid #334155;
+      }
+
+      .green {
+        color: #22c55e;
+      }
+      .yellow {
+        color: #eab308;
+      }
+      .red {
+        color: #ef4444;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>🛰 Dependency Observatory</h1>
+
+    <p id="summary"></p>
+
+    <table id="repos">
+      <thead>
+        <tr>
+          <th>Repo</th>
+          <th>Stack</th>
+          <th>Dependencies</th>
+          <th>Security</th>
+          <th>Updates</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody></tbody>
+    </table>
+
+    <script>
+      async function load() {
+        let data = await fetch("dashboard.json").then((r) => r.json());
+
+        let repos = data.repos;
+
+        document.getElementById("summary").innerText = `Repos: ${repos.length}`;
+
+        let tbody = document.querySelector("#repos tbody");
+
+        repos.forEach((repo) => {
+          let row = document.createElement("tr");
+
+          row.innerHTML = `
+<td>
+<a href="https://github.com/${repo.repo}" target="_blank">
+${repo.repo}
+</a>
+</td>
+
+<td>${repo.stack}</td>
+
+<td>${repo.dependencies ? "📦" : "-"}</td>
+
+<td class="${repo.alerts > 0 ? "red" : "green"}">
+${repo.alerts}
+</td>
+
+<td class="${repo.updates > 0 ? "yellow" : "green"}">
+${repo.updates}
+</td>
+
+<td class="${repo.actions > 0 ? "yellow" : "green"}">
+${repo.actions}
+</td>
+`;
+
+          tbody.appendChild(row);
+        });
+      }
+
+      load();
+    </script>
+  </body>
+</html>
