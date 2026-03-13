@@ -13,16 +13,50 @@ headers = {
 
 DEPENDENCY_FILES = [
     "package.json",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "bun.lockb",
     "requirements.txt",
+    "requirements-dev.txt",
     "pyproject.toml",
+    "Pipfile",
+    "Pipfile.lock",
+    "poetry.lock",
+    "uv.lock",
     "go.mod",
+    "go.sum",
     "Cargo.toml",
+    "Cargo.lock",
     "pubspec.yaml",
+    "pubspec.lock",
     "composer.json",
+    "composer.lock",
     "Gemfile",
+    "Gemfile.lock",
     "pom.xml",
-    "build.gradle"
+    "build.gradle",
+    "build.gradle.kts",
+    "settings.gradle",
+    "settings.gradle.kts",
+    "Directory.Packages.props",
+    "packages.config",
+    "packages.lock.json"
 ]
+
+LANGUAGE_TO_STACK = {
+    "JavaScript": "Node",
+    "TypeScript": "Node",
+    "Python": "Python",
+    "PHP": "PHP",
+    "C#": "C#",
+    "Java": "Java",
+    "Kotlin": "Kotlin",
+    "Go": "Go",
+    "Rust": "Rust",
+    "Ruby": "Ruby",
+    "Dart": "Dart"
+}
 
 def get_pull_requests(repo):
 
@@ -135,37 +169,52 @@ def get_alerts(repo):
     return r.json()
 
 
-def repo_has_dependencies(files):
+def repo_has_dependencies(files, stack="Unknown", updates=0, alert_count=0):
+
+    normalized = {f.lower() for f in files}
 
     for dep in DEPENDENCY_FILES:
 
-        if dep in files:
+        if dep.lower() in normalized:
             return True
 
-    for f in files:
+    for f in normalized:
 
-        if f.endswith(".csproj"):
+        if f.endswith((".csproj", ".fsproj", ".vbproj")):
             return True
+
+    # If Dependabot is already reporting updates/alerts, dependencies exist.
+    if updates > 0 or alert_count > 0:
+        return True
+
+    # Language-based fallback helps repos where manifests are nested.
+    if stack in {"Node", "Python", "PHP", "C#", "Java", "Kotlin", "Go", "Rust", "Ruby", "Flutter", "Dart"}:
+        return True
 
     return False
 
 
-def detect_stack(files):
+def detect_stack(files, repo_language=None):
 
-    if "pubspec.yaml" in files:
+    normalized = {f.lower() for f in files}
+
+    if "pubspec.yaml" in normalized:
         return "Flutter"
 
-    if "package.json" in files:
+    if "package.json" in normalized:
         return "Node"
 
-    if "requirements.txt" in files or "pyproject.toml" in files:
+    if "requirements.txt" in normalized or "pyproject.toml" in normalized:
         return "Python"
 
-    if "composer.json" in files:
+    if "composer.json" in normalized:
         return "PHP"
 
-    if any(f.endswith(".csproj") for f in files):
+    if any(f.endswith(".csproj") for f in normalized):
         return "C#"
+
+    if repo_language in LANGUAGE_TO_STACK:
+        return LANGUAGE_TO_STACK[repo_language]
 
     return "Unknown"
 
@@ -206,7 +255,7 @@ def main():
 
     output = {
         "generated": datetime.now(timezone.utc).isoformat(),
-        "repos": results
+        "repos": sorted(results, key=lambda item: item["repo"].lower())
     }
 
     with open("docs/dashboard.json", "w") as f:
@@ -225,9 +274,7 @@ def scan_repo(repo):
 
     files = get_repo_files(name)
 
-    has_deps = repo_has_dependencies(files)
-
-    stack = detect_stack(files)
+    stack = detect_stack(files, repo.get("language"))
 
     prs = get_pull_requests(name)
 
@@ -241,6 +288,13 @@ def scan_repo(repo):
             "github-actions" in pr["title"].lower()
             or ".github/workflows" in pr["title"].lower()
         )
+    )
+
+    has_deps = repo_has_dependencies(
+        files,
+        stack=stack,
+        updates=updates,
+        alert_count=len(alerts)
     )
 
     return {
