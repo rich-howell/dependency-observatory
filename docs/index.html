@@ -109,6 +109,7 @@
     <table id="repos">
       <thead>
         <tr>
+          <th>Org</th>
           <th>Repo</th>
           <th>Stack</th>
           <th>Dependencies</th>
@@ -134,13 +135,24 @@
 
           const data = await response.json();
           const repos = Array.isArray(data.repos) ? data.repos : [];
+          repos.sort((a, b) => {
+            const orgA = (a.org || (a.repo || "").split("/")[0] || "").toLowerCase();
+            const orgB = (b.org || (b.repo || "").split("/")[0] || "").toLowerCase();
+            if (orgA !== orgB) return orgA.localeCompare(orgB);
+
+            const repoA = (a.repo || "").toLowerCase();
+            const repoB = (b.repo || "").toLowerCase();
+            return repoA.localeCompare(repoB);
+          });
 
           summary.innerText = `Repos: ${repos.length}`;
 
           repos.forEach((repo) => {
             let row = document.createElement("tr");
+            const org = repo.org || (repo.repo || "").split("/")[0] || "Unknown";
 
             row.innerHTML = `
+<td>${org}</td>
 <td>
 <a href="https://github.com/${repo.repo}" target="_blank" rel="noopener noreferrer">
 ${repo.repo}
