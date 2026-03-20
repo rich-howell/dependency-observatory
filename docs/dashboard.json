@@ -1,5 +1,5 @@
 {
-  "generated": "2026-03-20T13:55:49.863412+00:00",
+  "generated": "2026-03-20T14:39:23.348770+00:00",
   "repos": [
     {
       "repo": "F1-SQL/f1-sql",
@@ -366,6 +366,15 @@
       "org": "rich-howell",
       "stack": "C#",
       "dependencies": true,
+      "alert_count": 0,
+      "updates": 0,
+      "actions": 0
+    },
+    {
+      "repo": "rich-howell/purple-platforms",
+      "org": "rich-howell",
+      "stack": "Unknown",
+      "dependencies": false,
       "alert_count": 0,
       "updates": 0,
       "actions": 0
